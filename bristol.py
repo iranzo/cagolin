@@ -73,6 +73,11 @@ class Switch(object):
             return False
 
 
+def createdb():
+    # Create database if it doesn't exist
+    cur.execute('CREATE TABLE config(key TEXT, value TEXT)')
+    return
+
 # Initialize database access
 con = None
 try:
@@ -156,10 +161,7 @@ def getkarma(word):
     return value
 
 
-def createdb():
-    # Create database if it doesn't exist
-    cur.execute('CREATE TABLE config(key TEXT, value TEXT)')
-    return
+
 
 
 def config(key):
