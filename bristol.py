@@ -528,101 +528,6 @@ def statscommands(texto, chat_id, message_id, who_un):
 
     return
 
-
-def karmacommands(texto, chat_id, message_id):
-    # Process lines for commands in the first word of the line (Telegram commands)
-    word = texto.split()[0]
-    commandtext = None
-
-    # Check first word for commands
-    for case in Switch(word):
-        if case('rank'):
-            try:
-                word = texto.split()[1]
-            except:
-                word = None
-            commandtext = rank(word)
-            break
-        if case('srank'):
-            try:
-                word = texto.split()[1]
-            except:
-                word = None
-            commandtext = srank(word)
-            break
-        if case():
-            commandtext = None
-
-    # If any of above cases did a match, send command
-    if commandtext:
-        sendmessage(chat_id=chat_id, text=commandtext,
-                    reply_to_message_id=message_id)
-        log(facility="karmacommands", verbosity=9,
-            text="karmacommand:  %s" % word)
-    return
-
-
-def rank(word=None):
-    if getalias(word):
-        word = getalias(word)
-    if word:
-        # if word is provided, return the rank value for that word
-        string = (word,)
-        sql = "SELECT * FROM karma WHERE word='%s'" % string
-        cur.execute(sql)
-        value = cur.fetchone()
-
-        try:
-            # Get value from SQL query
-            value = value[1]
-
-        except:
-            # Value didn't exist before, return 0 value
-            value = 0
-        text = "%s has %s karma points." % (word, value)
-
-    else:
-        # if word is not provided, return top 10 words with top karma
-        sql = "select * from karma ORDER BY value DESC LIMIT 10;"
-
-        text = "Global rankings:\n"
-        line = 0
-        for item in cur.execute(sql):
-            try:
-                value = item[1]
-                word = item[0]
-                line += 1
-                text += "%s. %s (%s)\n" % (line, word, value)
-            except:
-                continue
-    log(facility="rank", verbosity=9,
-        text="Returning karma %s for word %s" % (text, word))
-    return text
-
-
-def srank(word=None):
-    if getalias(word):
-        word = getalias(word)
-    text = ""
-    if word is None:
-        # If no word is provided to srank, call rank instead
-        text = rank(word)
-    else:
-        string = "%" + word + "%"
-        sql = "SELECT * FROM karma WHERE word LIKE '%s' LIMIT 10" % string
-
-        for item in cur.execute(sql):
-            try:
-                value = item[1]
-                word = item[0]
-                text += "%s: (%s)\n" % (word, value)
-            except:
-                continue
-    log(facility="srank", verbosity=9,
-        text="Returning srank for word: %s" % word)
-    return text
-
-
 def log(facility=config(key='database'), severity="INFO", verbosity=0, text=""):
     when = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     if config('verbosity') >= verbosity:
@@ -729,9 +634,6 @@ def process():
 
         # Search for telegram commands
         telegramcommands(texto, chat_id, message_id, who_un)
-
-        # Search for karma commands
-        karmacommands(texto, chat_id, message_id)
 
     log(facility="main", verbosity=0,
         text="Last processed message at: %s" % date)
