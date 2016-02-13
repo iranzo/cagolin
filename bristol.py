@@ -259,9 +259,6 @@ def telegramcommands(texto, chat_id, message_id, who_un):
         if case('/stop'):
             commandtext = "This bot does not use start or stop commands, it automatically checks for karma operands"
             break
-        if case('/alias'):
-            aliascommands(texto, chat_id, message_id, who_un)
-            break
         if case('/config'):
             configcommands(texto, chat_id, message_id, who_un)
             break
@@ -278,81 +275,6 @@ def telegramcommands(texto, chat_id, message_id, who_un):
         log(facility="commands", verbosity=9,
             text="Command: %s" % word)
     return
-
-
-def getalias(word):
-    string = (word,)
-    sql = "SELECT * FROM alias WHERE key='%s'" % string
-    cur.execute(sql)
-    value = cur.fetchone()
-    log(facility="alias", verbosity=9, text="getalias: %s" % word)
-
-    try:
-        # Get value from SQL query
-        value = value[1]
-
-    except:
-        # Value didn't exist before, return 0
-        value = False
-
-    # We can define recursive aliases, so this will return the ultimate one
-    if value:
-        return getalias(word=value)
-    return word
-
-
-def createalias(word, value):
-    if getalias(value) == word:
-        log(facility="alias", verbosity=9, text="createalias: circular reference %s=%s" % (word, value))
-    else:
-        if not getalias(word):
-            sql = "INSERT INTO alias VALUES('%s','%s')" % (word, value)
-            cur.execute(sql)
-            log(facility="alias", verbosity=9, text="createalias: %s=%s" % (word, value))
-            return con.commit()
-    return False
-
-
-def deletealias(word):
-    sql = "DELETE FROM alias WHERE key='%s'" % word
-    cur.execute(sql)
-    log(facility="alias", verbosity=9, text="rmalias: %s" % word)
-    return con.commit()
-
-
-def listalias(word=False):
-    if word:
-        # if word is provided, return the alias for that word
-        string = (word,)
-        sql = "SELECT * FROM alias WHERE key='%s'" % string
-        cur.execute(sql)
-        value = cur.fetchone()
-
-        try:
-            # Get value from SQL query
-            value = value[1]
-
-        except:
-            # Value didn't exist before, return 0 value
-            value = 0
-        text = "%s has an alias %s" % (word, value)
-
-    else:
-        sql = "select * from alias ORDER BY key DESC"
-
-        text = "Defined aliases:\n"
-        line = 0
-        for item in cur.execute(sql):
-            try:
-                value = item[1]
-                word = item[0]
-                line += 1
-                text += "%s. %s (%s)\n" % (line, word, value)
-            except:
-                continue
-    log(facility="alias", verbosity=9,
-        text="Returning aliases %s for word %s" % (text, word))
-    return text
 
 
 def setconfig(key, value):
@@ -404,46 +326,6 @@ def showconfig(key=False):
     log(facility="config", verbosity=9,
         text="Returning config %s for key %s" % (text, key))
     return text
-
-
-def aliascommands(texto, chat_id, message_id, who_un):
-    log(facility="alias", verbosity=9,
-        text="Command: %s by %s" % (texto, who_un))
-    if who_un == config('owner'):
-        log(facility="alias", verbosity=9,
-            text="Command: %s by %s" % (texto, who_un))
-        command = texto.split(' ')[1]
-        try:
-            word = texto.split(' ')[2]
-        except:
-            word = ""
-
-        for case in Switch(command):
-            if case('list'):
-                text = listalias(word)
-                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True)
-                break
-            if case('delete'):
-                key = word
-                text = "Deleting alias for %s" % key
-                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True)
-                deletealias(word=key)
-                break
-            if case():
-                word = texto.split(' ')[1]
-                if "=" in word:
-                    key = word.split('=')[0]
-                    value = word.split('=')[1]
-                    text = "Setting alias for %s to %s" % (key, value)
-                    sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id,
-                                disable_web_page_preview=True)
-                    # Removing duplicates on karma DB and add the previous values
-                    old = getkarma(key)
-                    updatekarma(word=key, change=-old)
-                    updatekarma(word=value, change=old)
-                    createalias(word=key, value=value)
-
-    return
 
 
 def configcommands(texto, chat_id, message_id, who_un):
