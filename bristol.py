@@ -76,6 +76,7 @@ class Switch(object):
 def createdb():
     # Create database if it doesn't exist
     cur.execute('CREATE TABLE config(key TEXT, value TEXT)')
+    cur.execute('CREATE TABLE stats(type TEXT, id INT, name TEXT, date TEXT, count INT)')
     return
 
 # Initialize database access
