@@ -727,12 +727,11 @@ def process():
         if update_id > lastupdateid:
             lastupdateid = update_id
 
-        if not error:
-            # Search for telegram commands
-            telegramcommands(texto, chat_id, message_id, who_un)
+        # Search for telegram commands
+        telegramcommands(texto, chat_id, message_id, who_un)
 
-            # Search for karma commands
-            karmacommands(texto, chat_id, message_id)
+        # Search for karma commands
+        karmacommands(texto, chat_id, message_id)
 
     log(facility="main", verbosity=0,
         text="Last processed message at: %s" % date)
