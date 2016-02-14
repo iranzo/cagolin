@@ -248,9 +248,7 @@ def telegramcommands(texto, chat_id, message_id, who_un):
     commandtext = None
     for case in Switch(word):
         if case('/help'):
-            commandtext = "To use this bot use word++ or word-- to increment or decrement karma, a new message will be sent providing the new total\n\n"
-            commandtext += "Use rank word or rank to get value for actual word or top 10 rankings\n\n"
-            commandtext += "Use srank word to search for similar words already ranked\n\n"
+            commandtext = "This bot tracks entries with date and bristol type \n\n"
             commandtext += "Learn more about this bot in https://github.com/iranzo/cagolin"
             break
         if case('/start'):
@@ -264,6 +262,9 @@ def telegramcommands(texto, chat_id, message_id, who_un):
             break
         if case('/stats'):
             statscommands(texto, chat_id, message_id, who_un)
+            break
+        if case('/new'):
+            bristoladd(texto, chat_id, message_id, who_un)
             break
         if case():
             commandtext = None
