@@ -78,6 +78,7 @@ def createdb():
     cur.execute('CREATE TABLE config(key TEXT, value TEXT);')
     cur.execute('CREATE TABLE stats(type TEXT, id INT, name TEXT, date TEXT, count INT);')
     cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
+    cur.execute('CREATE TABLE status(id INT, status INT);')
     return
 
 # Initialize database access
@@ -99,7 +100,7 @@ except lite.Error, e:
 
 # Function definition
 def sendmessage(chat_id=0, text="", reply_to_message_id=None,
-                disable_web_page_preview=True):
+                disable_web_page_preview=True, extra=False):
     url = "%s%s/sendMessage" % (config(key='url'), config(key='token'))
     message = "%s?chat_id=%s&text=%s" % (url, chat_id,
                                          urllib.quote_plus(text.encode('utf8'))
@@ -108,6 +109,8 @@ def sendmessage(chat_id=0, text="", reply_to_message_id=None,
         message += "&reply_to_message_id=%s" % reply_to_message_id
     if disable_web_page_preview:
         message += "&disable_web_page_preview=1"
+    if extra:
+        message += "&%s" % extra
     log(facility="sendmessage", verbosity=3,
         text="Sending message: %s" % text)
     return json.load(urllib.urlopen(message))
@@ -154,6 +157,34 @@ def config(key):
     except:
         # Value didn't exist before, return 0
         value = False
+
+    return value
+
+def status(id=0, status=False):
+    if status:
+        if status(id=id):
+            sql = "UPDATE status SET status='%s' WHERE id='%s';" % (status, id)
+            cur.execute(sql)
+            log(facility="status", verbosity=9, text="status: %s=%s" % (id, status))
+            con.commit()
+        else:
+            sql = "INSERT INTO status VALUES('%s','%s');" % (id, status)
+            cur.execute(sql)
+            log(facility="status", verbosity=9, text="status: %s=%s" % (key, value))
+            con.commit()
+    else:
+        string = (id,)
+        sql = "SELECT * FROM status WHERE id='%s';" % string
+        cur.execute(sql)
+        value = cur.fetchone()
+
+        try:
+            # Get value from SQL query
+            value = value[1]
+
+        except:
+            # Value didn't exist before, return 0
+            value = False
 
     return value
 
@@ -205,17 +236,80 @@ def bristolcommands(texto, chat_id, message_id, who_id):
     word = texto.split()[0]
     commandtext = None
     for case in Switch(word):
-        if case('/new'):
-            bristoladd(texto, chat_id, message_id, who_id)
+        if case('/add'):
+            status(id=who_id, status=1)
+            commandtext="We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
+            break
+        if case('/cancel'):
+            status(id=who_id, status=-1)
+            commandtext="Cancelling any onging data input"
+            break
         if case():
             commandtext = None
 
-    # If any of above commands did match, send command
-    if commandtext:
-        sendmessage(chat_id=chat_id, text=commandtext,
-                    reply_to_message_id=message_id)
-        log(facility="bristol", verbosity=9,
-            text="Command: %s" % word)
+        # If any of above commands did match, send command
+        if commandtext:
+            sendmessage(chat_id=chat_id, text=commandtext, reply_to_message_id=message_id)
+            log(facility="bristol", verbosity=9, text="Command: %s" % word)
+
+    if status(id=who_id)>0:
+        # We're in the middle of data entry, so process next step.
+        # cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
+        # 1 - Input date
+        # 2 - Store date
+        # 3 - Input lenght
+        # 4 - Store lenght
+        # 5 - Input type
+        # 6 - Store type
+        # 7 - Input comment
+        # 8 - Store comment
+        # 9 - Store all date
+
+        if status(id=who_id) ==  1:
+            json_keyboard = json.dumps({'keyboard': [["now"], ["other"]],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True})
+            extra="reply_markup=%s" % json_keyboard
+            text="When did it happened?"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
+            status(id=who_id,status=2)
+
+
+        if status(id=who_id) == 3:
+            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"],["4"],["5"],["6"],["7"],["8"],["9"]],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True})
+            extra="reply_markup=%s" % json_keyboard
+            text="How long did it took?"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
+            status(id=who_id,status=4)
+
+        if status(id) == 5:
+            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"],["4"],["5"],["6"],["7"]],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True})
+            extra="reply_markup=%s" % json_keyboard
+            text="How long did it took?"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
+            status(id=who_id,status=6)
+
+
+    return
+
+def bristoladd(texto, chat_id, message_id, who_id):
+    # Process texto for /new and start asking the user who sent it for more information
+    # force_reply=True and selective=True
+    extra="force_reply=True&selective=True"
+
+    json_keyboard = json.dumps({'keyboard': [["A button"], ["B button"]],
+                            'one_time_keyboard': True,
+                            'resize_keyboard': True})
+
+    extra="reply_markup=%s" % json_keyboard
+
+
+
+    sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
     return
 
 
