@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 #
-# Description: Bot for controlling karma on Telegram
+# Description: Bot for controlling  Bristol on Telegram
 # Author: Pablo Iranzo Gomez (Pablo.Iranzo@gmail.com)
 #
 #
@@ -24,7 +24,7 @@ import datetime
 from time import sleep
 
 description = """
-Stampy is a script for controlling Karma via Telegram.org bot api
+Bristol is a script for controlling entries via Telegram.org bot api
 
 """
 
@@ -33,7 +33,7 @@ p = optparse.OptionParser("bristol.py [arguments]", description=description)
 p.add_option("-t", "--token", dest="token",
              help="API token for bot access to messages", default=None)
 p.add_option("-b", "--database", dest="database",
-             help="database file for storing karma and last processed message",
+             help="database file for storing data and last processed message",
              default="bristol.db")
 p.add_option('-v', "--verbosity", dest="verbosity",
              help="Show messages while running", metavar='[0-n]', default=0,
@@ -140,31 +140,6 @@ def clearupdates(offset):
     return result
 
 
-def updatekarma(word=None, change=0):
-    value = getkarma(word=word)
-    return putkarma(word, value + change)
-
-
-def getkarma(word):
-    string = (word,)
-    sql = "SELECT * FROM karma WHERE word='%s'" % string
-    cur.execute(sql)
-    value = cur.fetchone()
-
-    try:
-        # Get value from SQL query
-        value = value[1]
-
-    except:
-        # Value didn't exist before, return 0
-        value = 0
-
-    return value
-
-
-
-
-
 def config(key):
     string = (key,)
     sql = "SELECT * FROM config WHERE key='%s'" % string
@@ -187,24 +162,6 @@ def saveconfig(key, value):
         sql = "UPDATE config SET value = '%s' WHERE key = '%s'" % (value, key)
         cur.execute(sql)
         con.commit()
-    return value
-
-
-def createkarma(word):
-    sql = "INSERT INTO karma VALUES('%s',0)" % word
-    cur.execute(sql)
-    return con.commit()
-
-
-def putkarma(word, value):
-    if getkarma(word) == 0:
-        createkarma(word)
-    if value != 0:
-        sql = "UPDATE karma SET value = '%s' WHERE word = '%s'" % (value, word)
-    else:
-        sql = "DELETE FROM karma WHERE  word = '%s'" % word
-    cur.execute(sql)
-    con.commit()
     return value
 
 
@@ -252,10 +209,10 @@ def telegramcommands(texto, chat_id, message_id, who_un):
             commandtext += "Learn more about this bot in https://github.com/iranzo/cagolin"
             break
         if case('/start'):
-            commandtext = "This bot does not use start or stop commands, it automatically checks for karma operands"
+            commandtext = "This bot does not use start or stop commands"
             break
         if case('/stop'):
-            commandtext = "This bot does not use start or stop commands, it automatically checks for karma operands"
+            commandtext = "This bot does not use start or stop commands"
             break
         if case('/config'):
             configcommands(texto, chat_id, message_id, who_un)
@@ -411,6 +368,7 @@ def statscommands(texto, chat_id, message_id, who_un):
 
     return
 
+
 def log(facility=config(key='database'), severity="INFO", verbosity=0, text=""):
     when = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
     if config('verbosity') >= verbosity:
@@ -418,43 +376,8 @@ def log(facility=config(key='database'), severity="INFO", verbosity=0, text=""):
     return
 
 
-def sendsticker(chat_id=0, sticker="", text="", reply_to_message_id=""):
-    url = "%s%s/sendSticker" % (config(key='url'), config(key='token'))
-    message = "%s?chat_id=%s" % (url, chat_id)
-    message = "%s&sticker=%s" % (message, sticker)
-    if reply_to_message_id:
-        message += "&reply_to_message_id=%s" % reply_to_message_id
-    log(facility="sendsticker", verbosity=3, text="Sending sticker: %s" % text)
-    return json.load(urllib.urlopen(message))
-
-
-def stampy(chat_id="", karma=0):
-    karma = "%s" % karma
-    # Sticker definitions for each rank
-    x00 = "BQADBAADYwAD17FYAAEidrCCUFH7AgI"
-    x000 = "BQADBAADZQAD17FYAAEeeRNtkOWfBAI"
-    x0000 = "BQADBAADZwAD17FYAAHHuNL2oLuShwI"
-    x00000 = "BQADBAADaQAD17FYAAHzIBRZeY4uNAI"
-
-    sticker = ""
-    if karma[-5:] == "00000":
-        sticker = x00000
-    elif karma[-4:] == "0000":
-        sticker = x0000
-    elif karma[-3:] == "000":
-        sticker = x000
-    elif karma[-2:] == "00":
-        sticker = x00
-
-    text = "Sticker for %s karma points" % karma
-
-    if sticker != "":
-        sendsticker(chat_id=chat_id, sticker=sticker, text="%s" % text)
-    return
-
-
 def process():
-    # Main code for processing the karma updates
+    # Main code for processing the updates
     date = 0
     lastupdateid = 0
     log(facility="main", verbosity=0,
@@ -463,7 +386,7 @@ def process():
     error = False
     count = 0
 
-    # Process each message available in URL and search for karma operators
+    # Process each message available in URL and search for operators
     for message in getupdates():
         # Count messages in each batch
         count += 1
