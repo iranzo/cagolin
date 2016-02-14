@@ -160,8 +160,8 @@ def config(key):
 
     return value
 
-def status(id=0, status=False):
-    if status:
+def status(id=0, state=False):
+    if state:
         if status(id=id):
             sql = "UPDATE status SET status='%s' WHERE id='%s';" % (status, id)
             cur.execute(sql)
@@ -237,11 +237,11 @@ def bristolcommands(texto, chat_id, message_id, who_id):
     commandtext = None
     for case in Switch(word):
         if case('/add'):
-            status(id=who_id, status=1)
+            status(id=who_id, state=1)
             commandtext="We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
             break
         if case('/cancel'):
-            status(id=who_id, status=-1)
+            status(id=who_id, state=-1)
             commandtext="Cancelling any onging data input"
             break
         if case():
@@ -272,7 +272,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             extra="reply_markup=%s" % json_keyboard
             text="When did it happened?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-            status(id=who_id,status=2)
+            status(id=who_id,state=2)
 
 
         if status(id=who_id) == 3:
@@ -282,7 +282,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             extra="reply_markup=%s" % json_keyboard
             text="How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-            status(id=who_id,status=4)
+            status(id=who_id,state=4)
 
         if status(id) == 5:
             json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"],["4"],["5"],["6"],["7"]],
@@ -291,7 +291,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             extra="reply_markup=%s" % json_keyboard
             text="How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-            status(id=who_id,status=6)
+            status(id=who_id,state=6)
 
 
     return
