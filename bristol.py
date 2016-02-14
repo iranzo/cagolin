@@ -170,7 +170,7 @@ def status(id=0, state=False):
         else:
             sql = "INSERT INTO status VALUES('%s','%s');" % (id, status)
             cur.execute(sql)
-            log(facility="status", verbosity=9, text="status: %s=%s" % (key, value))
+            log(facility="status", verbosity=9, text="status: %s=%s" % (id, status))
             con.commit()
     else:
         string = (id,)
