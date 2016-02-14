@@ -81,6 +81,7 @@ def createdb():
     cur.execute('CREATE TABLE status(id INT, status INT);')
     return
 
+
 # Initialize database access
 con = None
 try:
@@ -160,8 +161,9 @@ def config(key):
 
     return value
 
+
 def status(id=0, state=False):
-    value=False
+    value = False
     if state:
         if status(id=id):
             sql = "UPDATE status SET status='%s' WHERE id='%s';" % (status, id)
@@ -232,6 +234,7 @@ def updatestats(type=None, id=0, name=None, date=None, count=0):
     cur.execute(sql)
     return con.commit()
 
+
 def bristolcommands(texto, chat_id, message_id, who_id):
     # Process lines for commands in the first word of the line (Telegram)
     word = texto.split()[0]
@@ -239,11 +242,11 @@ def bristolcommands(texto, chat_id, message_id, who_id):
     for case in Switch(word):
         if case('/add'):
             status(id=who_id, state=1)
-            commandtext="We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
+            commandtext = "We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
             break
         if case('/cancel'):
             status(id=who_id, state=-1)
-            commandtext="Cancelling any onging data input"
+            commandtext = "Cancelling any onging data input"
             break
         if case():
             commandtext = None
@@ -253,7 +256,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             sendmessage(chat_id=chat_id, text=commandtext, reply_to_message_id=message_id)
             log(facility="bristol", verbosity=9, text="Command: %s" % word)
 
-    if status(id=who_id)>0:
+    if status(id=who_id) > 0:
         # We're in the middle of data entry, so process next step.
         # cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
         # 1 - Input date
@@ -266,49 +269,46 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         # 8 - Store comment
         # 9 - Store all date
 
-        if status(id=who_id) ==  1:
+        if status(id=who_id) == 1:
             json_keyboard = json.dumps({'keyboard': [["now"], ["other"]],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True})
-            extra="reply_markup=%s" % json_keyboard
-            text="When did it happened?"
+                                        'one_time_keyboard': True,
+                                        'resize_keyboard': True})
+            extra = "reply_markup=%s" % json_keyboard
+            text = "When did it happened?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-            status(id=who_id,state=2)
-
+            status(id=who_id, state=2)
 
         if status(id=who_id) == 3:
-            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"],["4"],["5"],["6"],["7"],["8"],["9"]],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True})
-            extra="reply_markup=%s" % json_keyboard
-            text="How long did it took?"
+            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"], ["8"], ["9"]],
+                                        'one_time_keyboard': True,
+                                        'resize_keyboard': True})
+            extra = "reply_markup=%s" % json_keyboard
+            text = "How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-            status(id=who_id,state=4)
+            status(id=who_id, state=4)
 
         if status(id) == 5:
-            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"],["4"],["5"],["6"],["7"]],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True})
-            extra="reply_markup=%s" % json_keyboard
-            text="How long did it took?"
+            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"]],
+                                        'one_time_keyboard': True,
+                                        'resize_keyboard': True})
+            extra = "reply_markup=%s" % json_keyboard
+            text = "How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-            status(id=who_id,state=6)
-
+            status(id=who_id, state=6)
 
     return
+
 
 def bristoladd(texto, chat_id, message_id, who_id):
     # Process texto for /new and start asking the user who sent it for more information
     # force_reply=True and selective=True
-    extra="force_reply=True&selective=True"
+    extra = "force_reply=True&selective=True"
 
     json_keyboard = json.dumps({'keyboard': [["A button"], ["B button"]],
-                            'one_time_keyboard': True,
-                            'resize_keyboard': True})
+                                'one_time_keyboard': True,
+                                'resize_keyboard': True})
 
-    extra="reply_markup=%s" % json_keyboard
-
-
+    extra = "reply_markup=%s" % json_keyboard
 
     sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
     return
@@ -597,13 +597,13 @@ else:
 if not config(key='url'):
     if options.url:
         setconfig(key='url', value=options.url)
-        
+
 # Check if we've owner defined in DB or on cli and store
 if not config(key='owner'):
     if options.owner:
-        setconfig(key='owner', value=options.owner)        
+        setconfig(key='owner', value=options.owner)
 
-# Check operation mode and call process as required
+    # Check operation mode and call process as required
 if options.daemon or config(key='daemon'):
     setconfig(key='daemon', value=True)
     log(facility="main", verbosity=0, text="Running in daemon mode")
