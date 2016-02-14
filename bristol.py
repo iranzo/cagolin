@@ -270,6 +270,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         # 9 - Store all date
 
         if status(id=who_id) == 1:
+            log(facility="bristol", verbosity=9, text="Status 1: %s" % word)
             json_keyboard = json.dumps({'keyboard': [["now"], ["other"]],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
@@ -279,6 +280,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             status(id=who_id, state=2)
 
         if status(id=who_id) == 3:
+            log(facility="bristol", verbosity=9, text="Status 3: %s" % word)
             json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"], ["8"], ["9"]],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
@@ -288,6 +290,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             status(id=who_id, state=4)
 
         if status(id) == 5:
+            log(facility="bristol", verbosity=9, text="Status 5: %s" % word)
             json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"]],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
