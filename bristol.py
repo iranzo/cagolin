@@ -163,17 +163,18 @@ def config(key):
 
 
 def status(id=0, state=False):
+    log(facility="status", verbosity=9, text="status: %s=%s" % (id, state))
     value = False
     if state:
         if status(id=id):
-            sql = "UPDATE status SET status='%s' WHERE id='%s';" % (status, id)
+            sql = "UPDATE status SET status='%s' WHERE id='%s';" % (state, id)
             cur.execute(sql)
-            log(facility="status", verbosity=9, text="status: %s=%s" % (id, status))
+            log(facility="status", verbosity=9, text="status: %s=%s" % (id, state))
             con.commit()
         else:
             sql = "INSERT INTO status VALUES('%s','%s');" % (id, status)
             cur.execute(sql)
-            log(facility="status", verbosity=9, text="status: %s=%s" % (id, status))
+            log(facility="status", verbosity=9, text="status: %s=%s" % (id, state))
             con.commit()
     else:
         string = (id,)
