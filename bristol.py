@@ -143,7 +143,7 @@ def clearupdates(offset):
 
 def config(key):
     string = (key,)
-    sql = "SELECT * FROM config WHERE key='%s'" % string
+    sql = "SELECT * FROM config WHERE key='%s';" % string
     cur.execute(sql)
     value = cur.fetchone()
 
@@ -160,7 +160,7 @@ def config(key):
 
 def saveconfig(key, value):
     if value:
-        sql = "UPDATE config SET value = '%s' WHERE key = '%s'" % (value, key)
+        sql = "UPDATE config SET value = '%s' WHERE key = '%s';" % (value, key)
         cur.execute(sql)
         con.commit()
     return value
@@ -190,14 +190,33 @@ def updatestats(type=None, id=0, name=None, date=None, count=0):
         value = False
         old_id = False
 
-    if not value:
-        sql = "INSERT INTO stats VALUES ('%s', '%s', '%s', '%s', '%s');" % (type, id, name, date, count)
+    # Asume value doesn't exist, then set to update if it does
+    sql = "INSERT INTO stats VALUES ('%s', '%s', '%s', '%s', '%s');" % (type, id, name, date, count)
+
     if old_id != 0 and type:
         sql = "UPDATE stats SET type='%s', name='%s', date='%s', count='%s'  WHERE id = '%s';" % (
             type, name, date, count, id)
     log(facility="updatestats", verbosity=9, text="value")
     cur.execute(sql)
     return con.commit()
+
+def bristolcommands(texto, chat_id, message_id, who_id):
+    # Process lines for commands in the first word of the line (Telegram)
+    word = texto.split()[0]
+    commandtext = None
+    for case in Switch(word):
+        if case('/new'):
+            bristoladd(texto, chat_id, message_id, who_id)
+        if case():
+            commandtext = None
+
+    # If any of above commands did match, send command
+    if commandtext:
+        sendmessage(chat_id=chat_id, text=commandtext,
+                    reply_to_message_id=message_id)
+        log(facility="bristol", verbosity=9,
+            text="Command: %s" % word)
+    return
 
 
 def telegramcommands(texto, chat_id, message_id, who_un):
@@ -221,9 +240,6 @@ def telegramcommands(texto, chat_id, message_id, who_un):
         if case('/stats'):
             statscommands(texto, chat_id, message_id, who_un)
             break
-        if case('/new'):
-            bristoladd(texto, chat_id, message_id, who_un)
-            break
         if case():
             commandtext = None
 
@@ -239,14 +255,14 @@ def telegramcommands(texto, chat_id, message_id, who_un):
 def setconfig(key, value):
     if config(key=key):
         deleteconfig(key)
-    sql = "INSERT INTO config VALUES('%s','%s')" % (key, value)
+    sql = "INSERT INTO config VALUES('%s','%s');" % (key, value)
     cur.execute(sql)
     log(facility="config", verbosity=9, text="setconfig: %s=%s" % (key, value))
     return con.commit()
 
 
 def deleteconfig(word):
-    sql = "DELETE FROM config WHERE key='%s'" % word
+    sql = "DELETE FROM config WHERE key='%s';" % word
     cur.execute(sql)
     log(facility="config", verbosity=9, text="rmconfig: %s" % word)
     return con.commit()
@@ -256,7 +272,7 @@ def showconfig(key=False):
     if key:
         # if word is provided, return the config for that key
         string = (key,)
-        sql = "SELECT * FROM config WHERE key='%s'" % string
+        sql = "SELECT * FROM config WHERE key='%s';" % string
         cur.execute(sql)
         value = cur.fetchone()
 
@@ -270,7 +286,7 @@ def showconfig(key=False):
         text = "%s has a value of %s" % (key, value)
 
     else:
-        sql = "select * from config ORDER BY key DESC"
+        sql = "select * from config ORDER BY key DESC;"
 
         text = "Defined configurations:\n"
         line = 0
@@ -328,9 +344,9 @@ def configcommands(texto, chat_id, message_id, who_un):
 
 def showstats(type=False):
     if type:
-        sql = "select * from stats WHERE type='%s' ORDER BY type DESC" % type
+        sql = "select * from stats WHERE type='%s' ORDER BY type DESC;" % type
     else:
-        sql = "select * from stats ORDER BY type DESC"
+        sql = "select * from stats ORDER BY type DESC;"
 
     text = "Defined stats:\n"
     line = 0
@@ -445,6 +461,9 @@ def process():
         # Search for telegram commands
         telegramcommands(texto, chat_id, message_id, who_un)
 
+        # Search for bristol commands
+        bristolcommands(texto, chat_id, message_id, who_id)
+
     log(facility="main", verbosity=0,
         text="Last processed message at: %s" % date)
     log(facility="main", verbosity=0,
@@ -465,7 +484,7 @@ if options.database:
     setconfig(key='database', value=options.database)
 
 if not config(key='sleep'):
-    setconfig(key='sleep', value=10)
+    setconfig(key='sleep', value=2)
 
 # Check if we've the token required to access or exit
 if not config(key='token'):
