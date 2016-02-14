@@ -161,6 +161,7 @@ def config(key):
     return value
 
 def status(id=0, state=False):
+    value=False
     if state:
         if status(id=id):
             sql = "UPDATE status SET status='%s' WHERE id='%s';" % (status, id)
