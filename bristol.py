@@ -77,6 +77,7 @@ def createdb():
     # Create database if it doesn't exist
     cur.execute('CREATE TABLE config(key TEXT, value TEXT);')
     cur.execute('CREATE TABLE stats(type TEXT, id INT, name TEXT, date TEXT, count INT);')
+    cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
     return
 
 # Initialize database access
