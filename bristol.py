@@ -276,7 +276,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            text = "When did it happened?"
+            texto = "When did it happened?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
             status(id=who_id, state=2)
 
@@ -286,7 +286,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            text = "How long did it took?"
+            texto = "How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
             status(id=who_id, state=4)
 
@@ -296,7 +296,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            text = "How long did it took?"
+            texto = "How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
             status(id=who_id, state=6)
 
