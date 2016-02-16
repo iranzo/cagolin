@@ -240,6 +240,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
     # Process lines for commands in the first word of the line (Telegram)
     word = texto.split()[0]
     commandtext = None
+    extra = False
     for case in Switch(word):
         if case('/add'):
             status(id=who_id, state=1)
@@ -247,6 +248,8 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             break
         if case('/cancel'):
             status(id=who_id, state=-1)
+            reply_markup = json.dumps(dict(            hide_keyboard=True            ))
+            extra = "reply_markup=%s" % reply_markup
             commandtext = "Cancelling any onging data input"
             break
         if case():
@@ -254,7 +257,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
 
         # If any of above commands did match, send command
         if commandtext:
-            sendmessage(chat_id=chat_id, text=commandtext, reply_to_message_id=message_id)
+            sendmessage(chat_id=chat_id, text=commandtext, reply_to_message_id=message_id, extra=extra)
             log(facility="bristol", verbosity=9, text="Command: %s" % word)
 
     if status(id=who_id) > 0:
