@@ -251,7 +251,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             status(id=who_id, state=-1)
             reply_markup = json.dumps(dict(hide_keyboard=True))
             extra = "reply_markup=%s" % reply_markup
-            commandtext = "Cancelling any onging data input"
+            commandtext = "Cancelling any ongoing data input"
             break
 
         if case():
@@ -292,7 +292,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         if status(id_who_id) == 2:
             if 'now' in texto:
                 date = time.time()
-            else if:
+            else:
                 print "DATE NOT NOW"
 
         if status(id=who_id) == 3:
@@ -323,7 +323,7 @@ def bristol(who_id=False, date=False, usedtime=False, type=False, comment=False)
     #  cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
 
     log(facility="bristol", verbosity=9,
-        text="Who: %s, date: %s, usedtime %s, type %s, comment: %s"  " % ( who_id, date,usedtime, type, comment))
+        text="Who: %s, date: %s, usedtime %s, type %s, comment: %s" % (who_id, date, usedtime, type, comment))
 
     value = False
 
