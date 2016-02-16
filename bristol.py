@@ -246,14 +246,14 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             status(id=who_id, state=1)
             commandtext = "We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
             break
-            
+
         if case('/cancel'):
             status(id=who_id, state=-1)
             reply_markup = json.dumps(dict(hide_keyboard=True))
             extra = "reply_markup=%s" % reply_markup
             commandtext = "Cancelling any onging data input"
             break
-            
+
         if case():
             print "GENERIC CASE"
             commandtext = False
@@ -278,7 +278,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         # 9 - Store all date
 
         print "STATUS IS %s" % status(id=who_id)
-        
+
         if status(id=who_id) == 1:
             log(facility="bristol", verbosity=9, text="Status 1: %s" % word)
             json_keyboard = json.dumps({'keyboard': [["now"], ["other"]],
@@ -288,7 +288,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             text = "When did it happened?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=2)
-        
+
         if status(id_who_id) == 2:
             if 'now' in texto:
                 date = time.time()
@@ -322,11 +322,11 @@ def bristol(who_id=False, date=False, usedtime=False, type=False, comment=False)
     # Process the storing of data or updating the data already existing
     #  cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
 
-    log(facility="bristol", verbosity=9, text="Who: %s, date: %s, usedtime %s, type %s, comment: %s"  " % ( who_id, date,usedtime, type, comment))
-      
+    log(facility="bristol", verbosity=9,
+        text="Who: %s, date: %s, usedtime %s, type %s, comment: %s"  " % ( who_id, date,usedtime, type, comment))
+
     value = False
-    
-    
+
     # FIXME Use function for storing/retrieving values, so it can be used to incrementally update a record
     if state:
         if status(id=id):
@@ -353,8 +353,7 @@ def bristol(who_id=False, date=False, usedtime=False, type=False, comment=False)
             # Value didn't exist before, return 0
             value = False
 
-    return value    
-    
+    return value
 
 
 def telegramcommands(texto, chat_id, message_id, who_un):
