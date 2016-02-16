@@ -246,21 +246,25 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             status(id=who_id, state=1)
             commandtext = "We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
             break
+            
         if case('/cancel'):
             status(id=who_id, state=-1)
-            reply_markup = json.dumps(dict(            hide_keyboard=True            ))
+            reply_markup = json.dumps(dict(hide_keyboard=True))
             extra = "reply_markup=%s" % reply_markup
             commandtext = "Cancelling any onging data input"
             break
+            
         if case():
-            commandtext = None
+            print "GENERIC CASE"
+            commandtext = False
 
-        # If any of above commands did match, send command
-        if commandtext:
-            sendmessage(chat_id=chat_id, text=commandtext, reply_to_message_id=message_id, extra=extra)
-            log(facility="bristol", verbosity=9, text="Command: %s" % word)
+    # If any of above commands did match, send command
+    if commandtext:
+        sendmessage(chat_id=chat_id, text=commandtext, reply_to_message_id=message_id, extra=extra)
+        log(facility="bristol", verbosity=9, text="Command: %s" % word)
 
     if status(id=who_id) > 0:
+        print "STATUS OVER 0"
         # We're in the middle of data entry, so process next step.
         # cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
         # 1 - Input date
@@ -273,15 +277,23 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         # 8 - Store comment
         # 9 - Store all date
 
+        print "STATUS IS %s" % status(id=who_id)
+        
         if status(id=who_id) == 1:
             log(facility="bristol", verbosity=9, text="Status 1: %s" % word)
             json_keyboard = json.dumps({'keyboard': [["now"], ["other"]],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            texto = "When did it happened?"
-            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
+            text = "When did it happened?"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=2)
+        
+        if status(id_who_id) == 2:
+            if 'now' in texto:
+                date = time.time()
+            else if:
+                print "DATE NOT NOW"
 
         if status(id=who_id) == 3:
             log(facility="bristol", verbosity=9, text="Status 3: %s" % word)
@@ -289,8 +301,8 @@ def bristolcommands(texto, chat_id, message_id, who_id):
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            texto = "How long did it took?"
-            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
+            text = "How long did it took?"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=4)
 
         if status(id) == 5:
@@ -299,26 +311,50 @@ def bristolcommands(texto, chat_id, message_id, who_id):
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            texto = "How long did it took?"
-            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
+            text = "How long did it took?"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=6)
 
     return
 
 
-def bristoladd(texto, chat_id, message_id, who_id):
-    # Process texto for /new and start asking the user who sent it for more information
-    # force_reply=True and selective=True
-    extra = "force_reply=True&selective=True"
+def bristol(who_id=False, date=False, usedtime=False, type=False, comment=False):
+    # Process the storing of data or updating the data already existing
+    #  cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
 
-    json_keyboard = json.dumps({'keyboard': [["A button"], ["B button"]],
-                                'one_time_keyboard': True,
-                                'resize_keyboard': True})
+    log(facility="bristol", verbosity=9, text="Who: %s, date: %s, usedtime %s, type %s, comment: %s"  " % ( who_id, date,usedtime, type, comment))
+      
+    value = False
+    
+    
+    # FIXME Use function for storing/retrieving values, so it can be used to incrementally update a record
+    if state:
+        if status(id=id):
+            sql = "UPDATE status SET status='%s' WHERE id='%s';" % (state, id)
+            cur.execute(sql)
+            log(facility="bristol", verbosity=9, text="status: %s=%s" % (id, state))
+            con.commit()
+        else:
+            sql = "INSERT INTO status VALUES('%s','%s');" % (id, status)
+            cur.execute(sql)
+            log(facility="bristol", verbosity=9, text="status: %s=%s" % (id, state))
+            con.commit()
+    else:
+        string = (id,)
+        sql = "SELECT * FROM status WHERE id='%s';" % string
+        cur.execute(sql)
+        value = cur.fetchone()
 
-    extra = "reply_markup=%s" % json_keyboard
+        try:
+            # Get value from SQL query
+            value = value[1]
 
-    sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=texto)
-    return
+        except:
+            # Value didn't exist before, return 0
+            value = False
+
+    return value    
+    
 
 
 def telegramcommands(texto, chat_id, message_id, who_un):
