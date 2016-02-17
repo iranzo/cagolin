@@ -245,13 +245,20 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         if case('/add'):
             status(id=who_id, state=1)
             commandtext = "We'll be start asking some questions to store the new entry, write /cancel at anytime to stop it"
+            # Create entry for entering data
+            bristol(type=False)
             break
 
         if case('/cancel'):
             status(id=who_id, state=-1)
             reply_markup = json.dumps(dict(hide_keyboard=True))
             extra = "reply_markup=%s" % reply_markup
-            commandtext = "Cancelling any ongoing data input"
+            commandtext = "Cancelling any onging data input"
+            # Delete the data we used to store values
+            sql = "DELETE FROM bristol where id='-1';"
+            cur.execute(sql)
+            con.commit()
+
             break
 
         if case():
@@ -272,10 +279,9 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         # 3 - Input lenght
         # 4 - Store lenght
         # 5 - Input type
-        # 6 - Store type
-        # 7 - Input comment
-        # 8 - Store comment
-        # 9 - Store all date
+        # 6 - Input comment
+        # 7 - Store comment
+        # 8 - Store type
 
         print "STATUS IS %s" % status(id=who_id)
 
@@ -292,6 +298,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         if status(id_who_id) == 2:
             if 'now' in texto:
                 date = time.time()
+                bristol(id="-1", date=date)
             else:
                 print "DATE NOT NOW"
 
@@ -318,41 +325,43 @@ def bristolcommands(texto, chat_id, message_id, who_id):
     return
 
 
-def bristol(who_id=False, date=False, usedtime=False, type=False, comment=False):
+def bristol(who_id=False, date=False, usedtime=False, type=-1, comment=False, action="store"):
     # Process the storing of data or updating the data already existing
     #  cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
 
-    log(facility="bristol", verbosity=9,
-        text="Who: %s, date: %s, usedtime %s, type %s, comment: %s" % (who_id, date, usedtime, type, comment))
+    log(facility="bristol", verbosity=9, text="Who: %s, date: %s, usedtime %s, type %s, comment: %s" % ( who_id, date, usedtime, type, comment))
 
     value = False
 
     # FIXME Use function for storing/retrieving values, so it can be used to incrementally update a record
-    if state:
-        if status(id=id):
-            sql = "UPDATE status SET status='%s' WHERE id='%s';" % (state, id)
-            cur.execute(sql)
-            log(facility="bristol", verbosity=9, text="status: %s=%s" % (id, state))
-            con.commit()
-        else:
-            sql = "INSERT INTO status VALUES('%s','%s');" % (id, status)
-            cur.execute(sql)
-            log(facility="bristol", verbosity=9, text="status: %s=%s" % (id, state))
-            con.commit()
-    else:
-        string = (id,)
-        sql = "SELECT * FROM status WHERE id='%s';" % string
+
+    if type == False:
+        print "TYPE FALSE, INSERT initial value"
+        sql = "INSERT INTO bristol VALUES('','','','-1','');"
         cur.execute(sql)
-        value = cur.fetchone()
-
-        try:
-            # Get value from SQL query
-            value = value[1]
-
-        except:
-            # Value didn't exist before, return 0
-            value = False
-
+        con.commit()
+    if type == -1 or action == "store" :
+        if who_id:
+            sql = "UPDATE bristol set id='%s' WHERE type='-1';" % who_id
+            cur.execute(sql)
+            con.commit()
+        if date:
+            sql = "UPDATE bristol set date='%s' WHERE type='-1';" % date
+            cur.execute(sql)
+            con.commit()
+        if usedtime:
+            sql = "UPDATE bristol set usedtime='%s' WHERE type='-1';" % usedtime
+            cur.execute(sql)
+            con.commit()
+        if comment:
+            sql = "UPDATE bristol SET comment='%s' WHERE type='-1';" % comment
+    if type != -1 and action == "store":
+        # Last update to the data as it will no longer allow to find this record
+        sql = "UPDATE bristol SET type='%s' WHERE type='-1';" % type
+        cur.execute(sql)
+        con.commit()
+    if action == "list":
+        sql = "SELECT * FROM bristol"
     return value
 
 
