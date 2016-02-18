@@ -27,14 +27,3 @@ The bot, once token has been used and owner set via commandline, will store that
 The bot stores stats on users/chats, remembering the chat/user name and last time seen so it can be later used for purging data not being accessed in a while
 - `/stats show (user|chat)` will list the list of users/chats and time of last update
  
-### Alias
-Bot allows to setup alias, so when karma is given to a word, it will instead add it to a different one (and report that one)
-- `/alias key=value` Will create a new alias, so each time `key++` is used, it will instead do value++
-    - This operation, sums the previous karma of `key` and `value` and stores it in value so no karma is lost
-    - Recursive aliases can be defined, so doing:
-        - `/alias lettuce=vegetable`
-        - `/alias vegetable=food`
-        - `lettuce++` will give karma to `food`.
-- `/alias list` Will show current defined aliases
-- `/alias delete key` will delete a previously defined alias so each word gets karma on its own
-
