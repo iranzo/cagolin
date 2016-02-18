@@ -586,8 +586,11 @@ def process():
             who_un = None
 
         # Update stats on the message being processed
-        if chat_id:
-            updatestats(type="chat", id=chat_id, name=chat_name, date=datefor)
+
+        # Commented as bristol cannot be added to chats only direct conversations
+
+        # if chat_id:
+        #     updatestats(type="chat", id=chat_id, name=chat_name, date=datefor)
         if who_ln:
             name = "%s %s (@%s)" % (who_gn, who_ln, who_un)
             updatestats(type="user", id=who_id, name=name, date=datefor)
