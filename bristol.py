@@ -306,29 +306,44 @@ def bristolcommands(texto, chat_id, message_id, who_id):
                 date = time.time()
                 bristol(date=date)
                 status(id=who_id, state=3)
+                texto = ""
             else:
                 print "DATE NOT NOW"
 
         if status(id=who_id) == 3:
             log(facility="bristol", verbosity=9, text="Status 3: %s" % word)
-            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"], ["8"], ["9"]],
+            json_keyboard = json.dumps({'keyboard': [[["1"], ["2"], ["3"]], [["4"], ["5"], ["6"]], [["7"], ["8"], ["9"]]],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
             text = "How long did it took?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=4)
+            texto = ""
+        if status(id=who_id)== 4:
+            bristol(usedtime=texto)
+            status(id=who_id, state=5)
+            texto = ""
 
         if status(id) == 5:
             log(facility="bristol", verbosity=9, text="Status 5: %s" % word)
-            json_keyboard = json.dumps({'keyboard': [["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"]],
+            json_keyboard = json.dumps({'keyboard': [[["1"], ["2"], ["3"]], [["4"], ["5"], ["6"]], [["7"]]],
                                         'one_time_keyboard': True,
                                         'resize_keyboard': True})
             extra = "reply_markup=%s" % json_keyboard
-            text = "How long did it took?"
+            text = "Which kind in Bristol scale was it?"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=6)
+            texto = ""
 
+        if status(id) == 6:
+            bristol(type=texto)
+            reply_markup = json.dumps(dict(hide_keyboard=True))
+            extra = "reply_markup=%s" % reply_markup
+            text = "All data, entered, thanks"
+            sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
+            texto = ""
+            
     return
 
 
