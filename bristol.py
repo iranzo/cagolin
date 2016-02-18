@@ -22,6 +22,7 @@ import sys
 import time
 import datetime
 from time import sleep
+from prettytable import from_db_cursor
 
 description = """
 Bristol is a script for controlling entries via Telegram.org bot api
@@ -100,16 +101,17 @@ except lite.Error, e:
 
 
 # Function definition
-def sendmessage(chat_id=0, text="", reply_to_message_id=None,
-                disable_web_page_preview=True, extra=False):
+def sendmessage(chat_id=0, text="", reply_to_message_id=False, disable_web_page_preview=True, parse_mode=False, extra=False):
     url = "%s%s/sendMessage" % (config(key='url'), config(key='token'))
     message = "%s?chat_id=%s&text=%s" % (url, chat_id,
-                                         urllib.quote_plus(text.encode('utf8'))
+                                         urllib.quote_plus(text.encode('utf-8'))
                                          )
     if reply_to_message_id:
         message += "&reply_to_message_id=%s" % reply_to_message_id
     if disable_web_page_preview:
         message += "&disable_web_page_preview=1"
+    if parse_mode:
+        message += "&parse_mode=%s" % parse_mode
     if extra:
         message += "&%s" % extra
     log(facility="sendmessage", verbosity=3,
@@ -201,10 +203,9 @@ def saveconfig(key, value):
     return value
 
 
-def getstats(type=None, id=0, name=None, date=None, count=0):
+def getstats(type=False, id=0, name=False, date=False, count=0):
     sql = "SELECT * FROM stats WHERE id='%s' AND type='%s';" % (id, type)
     cur.execute(sql)
-
     try:
         value = cur.fetchone()
     except:
@@ -212,28 +213,33 @@ def getstats(type=None, id=0, name=None, date=None, count=0):
 
     if value:
         (type, id, name, date, count) = value
-    log(facility="getstats", verbosity=9, text="value")
+    if not type or not id or not name or not date:
+        value = False
+    if not count:
+        count = 0
+    log(facility="getstats", verbosity=9, text="values: type:%s, id:%s, name:%s, date:%s, count:%s" % (type, id, name, date, count))
+
     return value
 
 
-def updatestats(type=None, id=0, name=None, date=None, count=0):
+def updatestats(type=False, id=0, name=False, date=False):
     try:
         value = getstats(type=type, id=id)
         count = value[4] + 1
-        old_id = value[1]
     except:
         value = False
-        old_id = False
+        count = 0
 
     # Asume value doesn't exist, then set to update if it does
-    sql = "INSERT INTO stats VALUES ('%s', '%s', '%s', '%s', '%s');" % (type, id, name, date, count)
-
-    if old_id != 0 and type:
-        sql = "UPDATE stats SET type='%s', name='%s', date='%s', count='%s'  WHERE id = '%s';" % (
+    sql = "INSERT INTO stats VALUES('%s', '%s', '%s', '%s', '%s');" % (type, id, name, date, count)
+    if value:
+        sql = "UPDATE stats SET type='%s',name='%s',date='%s',count='%s' WHERE id='%s';" % (
             type, name, date, count, id)
-    log(facility="updatestats", verbosity=9, text="value")
-    cur.execute(sql)
-    return con.commit()
+    log(facility="updatestats", verbosity=9, text="values: type:%s, id:%s, name:%s, date:%s, count:%s" % (type, id, name, date, count))
+    if id:
+        cur.execute(sql)
+        con.commit()
+    return
 
 
 def bristolcommands(texto, chat_id, message_id, who_id):
@@ -295,7 +301,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=2)
 
-        if status(id_who_id) == 2:
+        if status(id=who_id) == 2:
             if 'now' in texto:
                 date = time.time()
                 bristol(id="-1", date=date)
@@ -329,18 +335,18 @@ def bristol(who_id=False, date=False, usedtime=False, type=-1, comment=False, ac
     # Process the storing of data or updating the data already existing
     #  cur.execute('CREATE TABLE bristol(id INT, date TEXT, usedtime INT, type INT, comment TEXT);')
 
-    log(facility="bristol", verbosity=9, text="Who: %s, date: %s, usedtime %s, type %s, comment: %s" % ( who_id, date, usedtime, type, comment))
+    log(facility="bristol", verbosity=9, text="Who: %s, date: %s, usedtime %s, type %s, comment: %s" % (who_id, date, usedtime, type, comment))
 
     value = False
 
     # FIXME Use function for storing/retrieving values, so it can be used to incrementally update a record
 
-    if type == False:
+    if not type:
         print "TYPE FALSE, INSERT initial value"
         sql = "INSERT INTO bristol VALUES('','','','-1','');"
         cur.execute(sql)
         con.commit()
-    if type == -1 or action == "store" :
+    if type == -1 or action == "store":
         if who_id:
             sql = "UPDATE bristol set id='%s' WHERE type='-1';" % who_id
             cur.execute(sql)
@@ -433,17 +439,10 @@ def showconfig(key=False):
 
     else:
         sql = "select * from config ORDER BY key DESC;"
-
+        cur.execute(sql)
         text = "Defined configurations:\n"
-        line = 0
-        for item in cur.execute(sql):
-            try:
-                value = item[1]
-                key = item[0]
-                line += 1
-                text += "%s. %s (%s)\n" % (line, key, value)
-            except:
-                continue
+        table = from_db_cursor(cur)
+        text = "%s\n```%s```" % (text, table.get_string())
     log(facility="config", verbosity=9,
         text="Returning config %s for key %s" % (text, key))
     return text
@@ -464,12 +463,12 @@ def configcommands(texto, chat_id, message_id, who_un):
         for case in Switch(command):
             if case('show'):
                 text = showconfig(word)
-                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True)
+                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True, parse_mode="Markdown")
                 break
             if case('delete'):
                 key = word
-                text = "Deleting config for %s" % key
-                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True)
+                text = "Deleting config for `%s`" % key
+                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True, parse_mode="Markdown")
                 deleteconfig(word=key)
                 break
             if case('set'):
@@ -478,9 +477,9 @@ def configcommands(texto, chat_id, message_id, who_un):
                     key = word.split('=')[0]
                     value = word.split('=')[1]
                     setconfig(key=key, value=value)
-                    text = "Setting config for %s to %s" % (key, value)
+                    text = "Setting config for `%s` to `%s`" % (key, value)
                     sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id,
-                                disable_web_page_preview=True)
+                                disable_web_page_preview=True, parse_mode="Markdown")
                 break
             if case():
                 break
@@ -490,22 +489,15 @@ def configcommands(texto, chat_id, message_id, who_un):
 
 def showstats(type=False):
     if type:
-        sql = "select * from stats WHERE type='%s' ORDER BY type DESC;" % type
+        sql = "select * from stats WHERE type='%s' ORDER BY count DESC" % type
     else:
-        sql = "select * from stats ORDER BY type DESC;"
-
+        sql = "select * from stats ORDER BY count DESC"
+    cur.execute(sql)
+    table = from_db_cursor(cur)
     text = "Defined stats:\n"
-    line = 0
-    for item in cur.execute(sql):
-        try:
-            (type, id, name, date, count) = item
-            line += 1
-            datefor = datetime.datetime.fromtimestamp(int(date)).strftime('%Y-%m-%d %H:%M:%S')
-            text += "%s. Type: %s ID: %s(%s) Date: %s Count: %s\n" % (line, type, id, name, datefor, count)
-        except:
-            continue
+    text = "%s\n```%s```" % (text, table.get_string())
     log(facility="stats", verbosity=9,
-        text="Returning stats %s for type %s" % (text, type))
+        text="Returning stats %s" % text)
     return text
 
 
@@ -524,7 +516,7 @@ def statscommands(texto, chat_id, message_id, who_un):
         for case in Switch(command):
             if case('show'):
                 text = showstats(key)
-                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True)
+                sendmessage(chat_id=chat_id, text=text, reply_to_message_id=message_id, disable_web_page_preview=True, parse_mode="Markdown")
                 break
             if case():
                 break
@@ -546,7 +538,6 @@ def process():
     log(facility="main", verbosity=0,
         text="Initial message at %s" % date)
     texto = ""
-    error = False
     count = 0
 
     # Process each message available in URL and search for operators
@@ -569,14 +560,15 @@ def process():
             texto = message['message']['text']
             message_id = int(message['message']['message_id'])
             date = int(float(message['message']['date']))
+            datefor = datetime.datetime.fromtimestamp(float(date)).strftime('%Y-%m-%d %H:%M:%S')
             who_gn = message['message']['from']['first_name']
             who_id = message['message']['from']['id']
 
         except:
-            error = True
             who_id = False
             who_gn = False
             date = False
+            datefor = False
             message_id = False
             texto = False
 
@@ -595,10 +587,10 @@ def process():
 
         # Update stats on the message being processed
         if chat_id:
-            updatestats(type="chat", id=chat_id, name=chat_name, date=date, count=0)
+            updatestats(type="chat", id=chat_id, name=chat_name, date=datefor)
         if who_ln:
             name = "%s %s (@%s)" % (who_gn, who_ln, who_un)
-            updatestats(type="user", id=who_id, name=name, date=date, count=0)
+            updatestats(type="user", id=who_id, name=name, date=datefor)
 
         # Update last message id to later clear it from the server
         if update_id > lastupdateid:
