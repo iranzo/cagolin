@@ -304,7 +304,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
         if status(id=who_id) == 2:
             if 'now' in texto:
                 date = time.time()
-                bristol(id=who_id, date=date)
+                bristol(date=date)
             else:
                 print "DATE NOT NOW"
 
