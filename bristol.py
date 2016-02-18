@@ -259,7 +259,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             status(id=who_id, state=-1)
             reply_markup = json.dumps(dict(hide_keyboard=True))
             extra = "reply_markup=%s" % reply_markup
-            commandtext = "Cancelling any onging data input"
+            commandtext = "Cancelling any ongoing data input"
             # Delete the data we used to store values
             sql = "DELETE FROM bristol where id='-1';"
             cur.execute(sql)
@@ -320,7 +320,8 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             status(id=who_id, state=4)
             texto = ""
-        if status(id=who_id)== 4:
+
+        if status(id=who_id) == 4:
             bristol(usedtime=texto)
             status(id=who_id, state=5)
             texto = ""
@@ -343,7 +344,7 @@ def bristolcommands(texto, chat_id, message_id, who_id):
             text = "All data, entered, thanks"
             sendmessage(chat_id=chat_id, reply_to_message_id=message_id, extra=extra, text=text)
             texto = ""
-            
+
     return
 
 
